@@ -140,47 +140,109 @@ class Kohana_Excel
         return $this->_excel->getAllSheets();
     }
 
-    public function set_data(array $data, $multi_sheet = FALSE)
+    public function set_data(array $datas, $multi_sheet = FALSE)
     {
         $dimension = array('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
             'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z');
         $worksheet = $this->get_active_sheet();
         $_header = Kohana::$config->load('table_header')->as_array();
-        $data = array_values($data);
-        if(!empty($data['0']) && is_array($data['0']))
+        $datas = array_values($datas);
+        $excel = array();
+        if(empty($datas['0']['0']))
         {
-            $value = array_keys($data['0']);
-            foreach ($value as $column => $val) {
-                if(is_numeric($val))
-                    break;
-                //change the header name
-                if(!empty($_header[$val]))
-                {
-                    $val = $_header[$val];
+            $excel[] = $datas;
+        }
+        if(empty($excel))
+        {
+            $excel = $datas;
+        }
+        $global_row = 0;
+        $column = 1;
+        $count = count($excel);
+        for($i=0;$i<$count;$i++)
+        {
+            $data =  $excel[$i];
+            if(!empty($data['header']))
+            {
+                $global_row++;
+                $column = 0;
+                foreach ($data['header'] as $key => $val) {
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $key);
+                    $worksheet->getStyle($coordinates)->getFont()->setBold(true);
+                    $worksheet->getStyle($coordinates)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('EEEEEE');
+                    $worksheet->getStyle($coordinates)->getBorders()->getTop()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
+
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column+1) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $val);
+                    $worksheet->getStyle($coordinates)->getBorders()->getTop()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
+                    $worksheet->getStyle($coordinates)->getBorders()->getRight()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
                 }
-                $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . (1);
-
-                $worksheet->setCellValue($coordinates, $val);
-                if(!empty($dimension[$column]))
-                {
-                    $len = 12;
-                    if($column<=10)
+                
+                    
+            }
+            if(!empty($data['0']) && is_array($data['0']))
+            {
+                $global_row++;
+                $value = array_keys($data['0']);
+                foreach ($value as $column => $val) {
+                    if(is_numeric($val))
+                        break;
+                    //change the header name
+                    if(!empty($_header[$val]))
                     {
-                        $len = 18;
+                        $val = $_header[$val];
                     }
-                    $worksheet->getColumnDimension($dimension[$column])->setWidth($len); 
-               }
-            }
-        }
-        foreach ($data as $row => $value) {
-            $row += 1;
-            $value = array_values($value);
-            foreach ($value as $column => $val) {
-                $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($row + 1);
-                $worksheet->setCellValue($coordinates, $val);
-            }
-        }
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
 
+                    $worksheet->setCellValue($coordinates, $val);
+                    $worksheet->getStyle($coordinates)->getFont()->setBold(true);
+                    $worksheet->getStyle($coordinates)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('EEEEEE');
+                    $worksheet->getStyle($coordinates)->getBorders()->getTop()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
+                    $worksheet->getRowDimension($global_row)->setRowHeight(30);
+                    if(!empty($dimension[$column]))
+                    {
+                        $len = 12;
+                        if($column<=10)
+                        {
+                            $len = 18;
+                        }
+                        $worksheet->getColumnDimension($dimension[$column])->setWidth($len); 
+                   }
+                }
+            }
+            foreach ($data as $row => $value) {
+                if(!is_numeric($row))
+                    continue;
+                $global_row++;
+                
+                $value = array_values($value);
+                foreach ($value as $column => $val) {
+                    if(is_array($val))continue;
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $val);
+                }
+            }
+
+            if(!empty($data['tailer']))
+            {
+                $column = 1;
+                foreach ($data['tailer'] as $key => $val) {
+                    $global_row++;
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $key);
+                    $worksheet->getStyle($coordinates)->getFont()->setBold(true);
+                    $worksheet->getStyle($coordinates)->getFill()->setFillType(PHPExcel_Style_Fill::FILL_SOLID)->getStartColor()->setRGB('EEEEEE');
+                    $worksheet->getStyle($coordinates)->getBorders()->getBottom()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
+
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($column+1) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $val);
+                }
+                
+                    
+            }
+            $global_row++;
+        }
         return;
     }
 
