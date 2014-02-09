@@ -148,6 +148,8 @@ class Kohana_Excel
         $_header = Kohana::$config->load('table_header')->as_array();
         $datas = array_values($datas);
         $excel = array();
+
+        //array for witholding muti table
         if(empty($datas['0']['0']))
         {
             $excel[] = $datas;
@@ -156,9 +158,11 @@ class Kohana_Excel
         {
             $excel = $datas;
         }
+
         $global_row = 0;
         $column = 1;
-        $count = count($excel);
+        $count = count($excel);   
+
         for($i=0;$i<$count;$i++)
         {
             $data =  $excel[$i];
@@ -166,7 +170,8 @@ class Kohana_Excel
             {
                 $global_row++;
                 $column = 0;
-                foreach ($data['header'] as $key => $val) {
+                foreach ($data['header'] as $key => $val) 
+                {
                     $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
                     $worksheet->setCellValue($coordinates, $key);
                     $worksheet->getStyle($coordinates)->getFont()->setBold(true);
@@ -177,15 +182,14 @@ class Kohana_Excel
                     $worksheet->setCellValue($coordinates, $val);
                     $worksheet->getStyle($coordinates)->getBorders()->getTop()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
                     $worksheet->getStyle($coordinates)->getBorders()->getRight()->setBorderStyle(PHPExcel_Style_Border::BORDER_THIN);
-                }
-                
-                    
+                }       
             }
             if(!empty($data['0']) && is_array($data['0']))
             {
                 $global_row++;
                 $value = array_keys($data['0']);
-                foreach ($value as $column => $val) {
+                foreach ($value as $column => $val) 
+                {
                     if(is_numeric($val))
                         break;
                     //change the header name
@@ -211,13 +215,28 @@ class Kohana_Excel
                    }
                 }
             }
-            foreach ($data as $row => $value) {
+            foreach ($data as $row => $value) 
+            {
                 if(!is_numeric($row))
                     continue;
+                //for the marketing overview
+                if (!is_array($value)) 
+                {
+
+                    //for header
+                    if($global_row==0)
+                        $global_row++;
+                    $coordinates = PHPExcel_Cell::stringFromColumnIndex($row) . ($global_row);
+                    $worksheet->setCellValue($coordinates, $value);
+                    continue;
+                }
+
+
                 $global_row++;
                 
                 $value = array_values($value);
-                foreach ($value as $column => $val) {
+                foreach ($value as $column => $val) 
+                {
                     if(is_array($val))continue;
                     $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
                     $worksheet->setCellValue($coordinates, $val);
@@ -227,7 +246,8 @@ class Kohana_Excel
             if(!empty($data['tailer']))
             {
                 $column = 1;
-                foreach ($data['tailer'] as $key => $val) {
+                foreach ($data['tailer'] as $key => $val) 
+                {
                     $global_row++;
                     $coordinates = PHPExcel_Cell::stringFromColumnIndex($column) . ($global_row);
                     $worksheet->setCellValue($coordinates, $key);
